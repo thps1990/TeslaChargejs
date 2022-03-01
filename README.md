@@ -33,3 +33,13 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 Das Skript nutzt die Tesla API um ein PV-Überschussladen ohne smarte Wallbox zu ermöglichen. Das Skript funktioniert prinzipiell mit jeder Lademöglichkeit (Auch UMC/Ladeziegel).
 Dabei kann je nach aktueller Leistung der PV Anlage und Hausverbrauch die Ladung gestartet/gestoppt werden oder die Stromstärke vollautomatisch angepasst werden.
 
+### Features
+
+- Automatisches Starten und Stoppen der Ladung, je nach Überschüssiger Leistung; Das Auto wird aufgeweckt falls es eingeschlafen ist
+- Automatische Regulierung der Stromstärke je nach PV-Überschuss
+- Es ist keine intelligente Wallbox notwendig
+- Unterstützung PV mit Akku (Mindest SoC für Start und Stop der Ladung)
+- Benachrichtigung per Telegramm
+- Berechnung wieviel Energy mit PV-Überschuss geladen wurde
+- korrigierte Werte für Fahrzeugstatus und Charging Phases aus dem Teslaadapter (werden neu angelegt)
+
