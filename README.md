@@ -3,6 +3,9 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
+### V1.6.1 
+- Doku überarbeitet
+
 ### V1.6 
 - Überarbeitung Loging, Loglevel
 - Telegramm Notifizierung hinzugefügt (Eingerichtete Telegramm Instanz notwendig)
@@ -37,9 +40,40 @@ Dabei kann je nach aktueller Leistung der PV Anlage und Hausverbrauch die Ladung
 
 - Automatisches Starten und Stoppen der Ladung, je nach Überschüssiger Leistung; Das Auto wird aufgeweckt falls es eingeschlafen ist
 - Automatische Regulierung der Stromstärke je nach PV-Überschuss
+- Per Geofencing wird sichergestellt, dass das Skript nur an der Heimischen Wallbox/UMC funktioniert
 - Es ist keine intelligente Wallbox notwendig
-- Unterstützung PV mit Akku (Mindest SoC für Start und Stop der Ladung)
+- Unterstützung PV mit Akku (Mindest-SoC für Start und Stop der Ladung)
 - Benachrichtigung per Telegramm
 - Berechnung wieviel Energy mit PV-Überschuss geladen wurde
 - korrigierte Werte für Fahrzeugstatus und Charging Phases aus dem Teslaadapter (werden neu angelegt)
 
+### Voraussetzungen
+
+- Eine lauffähige ioBroker Instanz mit mindestens den folgenden eingerichteten Adaptern
+    - javascript
+    - tesla-motors
+    - (optional) telegram
+- Die folgenden des Wechselrichters oder Smartmeters müssen im ioBroker verfügbar sein:
+    - Einspeiseleistung (in Watt)
+    - Netzbezug (in Watt)
+    - Optional:
+      - SoC des PV-Akkus
+      - Leistung (Ladung/Entladung) des PV Akkus
+      - Status des PV-Akkus (Wird geladen/Entladen)
+Das Skript funktioniert prinzipiell mit jedem Wechselrichter/Smartmeter, der sich an ioBroker anbinden lässt ( via Adapter oder Modbus). Die Verwendung eines Volkszählers ist ebenso möglich. 
+Getestet wurde das mit den folgenden Wechselrichtern/Smartmetern:<br>
+
+Hersteller | Modell | Methode/Adapter
+-------- | -------- | --------
+SolarEdge   | SE5000 HD   | Modbus TCP / Modbus Adapter
+Kostal   | Smart Energy Meter (KSEM)   | Modbus TCP / Modbus Adapter
+
+
+### Einrichtung
+
+1. Ein neues Javascript - Skript erzeugen
+2. Die Daten in der Sektion Einstellungen/Konfiguration ergänzen, ausfüllen
+3. Das Skript speichern und schließen
+
+**Hinweis**
+Das Skript erzeugt verschiedene neue Objekte im Skript Objekt Verzeichnis. Mit dem Objekt Ueberschussladen_aktiv kann die Funktionalität an und ausgeschalten werden. Im Standard ist das Skript angeschaltet. 
