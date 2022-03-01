@@ -45,6 +45,7 @@ Dabei kann je nach aktueller Leistung der PV Anlage und Hausverbrauch die Ladung
 - Unterstützung PV mit Akku (Mindest-SoC für Start und Stop der Ladung)
 - Benachrichtigung per Telegramm
 - Berechnung wieviel Energy mit PV-Überschuss geladen wurde
+- automatische Phasenerkennnung
 - korrigierte Werte für Fahrzeugstatus und Charging Phases aus dem Teslaadapter (werden neu angelegt)
 
 ### Voraussetzungen
