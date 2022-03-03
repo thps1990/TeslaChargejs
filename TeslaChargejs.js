@@ -142,11 +142,7 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
 
         if(charging_state == "Stopped")
         { //Auto ist angeschlossen, lädt aber nicht
-            if(is_stopsoc_reached())
-            {// Wenn PV-Akku ist unter Mindestschwelle
-                setState(ID_TSL_CMD_CHARGE_STOP,true);
-                log("Laden gestoppt, Akkustand PV zu niedrig",false,true);
-            }else if(Einspeiseleistung > MINDEST_EINSPEISE_LEISTUNG && is_startsoc_reached())
+             if(Einspeiseleistung > MINDEST_EINSPEISE_LEISTUNG && is_startsoc_reached())
             {//Mindesteinspeiseleistung erreich ; Laden starten
                 timeout_running = true;
                 setTimeout(function(){
@@ -174,10 +170,13 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
  
         }else if (charging_state == "Charging")
         {//Auto ist angeschlossen und lädt
-           log("IsCharging",true);
-           log("Einspeisung="+Einspeiseleistung + " Netzbezug="+Netzbezug,true);
-
-            if(Einspeiseleistung > ampborder)
+            log("IsCharging",true);
+            log("Einspeisung="+Einspeiseleistung + " Netzbezug="+Netzbezug,true);
+            if(is_stopsoc_reached())
+            {// Wenn PV-Akku ist unter Mindestschwelle
+                setState(ID_TSL_CMD_CHARGE_STOP,true);
+                log("Laden gestoppt, Akkustand PV zu niedrig",false,true);
+            }else if(Einspeiseleistung > ampborder)
             { // Mehr als 250/700 Watt werden eingespeist
                 if(getState(ID_TSL_GET_AMPS).val < 16)
                 {
