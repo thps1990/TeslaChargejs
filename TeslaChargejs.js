@@ -1,6 +1,6 @@
 //=============================Tesla Ueberschussladen - TeslaChargejs==========================================
 //V 1.6
-//Stand:28.02.2022 
+//Stand:05.03.2022 
 
 //=============================Einstellungen/Konfiguration=====================================================
 //Wo soll das Skript die neuen Objekte anlegen (Mit PV-Überschuss geladene Energy.... )
@@ -18,6 +18,9 @@ const MAXIMAL_NETZBEZUG             = 300; //Watt
 
 //Mit welcher Stromstärke soll das Laden begonnen werden
 const START_STROMSTAERKE            = 5; // A
+
+//Mit welcher Stromstärke soll maximal geladen werden (Wird auch zum entladen des Hausakkus verwendet)
+const MAX_STROMSTAERKE              = 16; //A
 
 //Soll Netzbezug im Rahmen der Stromstärkenregulierung vermieden werden?
 //Wenn diese Option aktiviert ist wird die Stromstärke reduziert, sobald ein Strom aus dem Netz/AKku bezogen wird
@@ -178,7 +181,7 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
                 log("Laden gestoppt, Akkustand PV zu niedrig",false,true);
             }else if(Einspeiseleistung > ampborder)
             { // Mehr als 250/700 Watt werden eingespeist
-                if(getState(ID_TSL_GET_AMPS).val < 16)
+                if(getState(ID_TSL_GET_AMPS).val < MAX_STROMSTAERKE)
                 {
                     timeout_running = true;
                     setTimeout(function(){
