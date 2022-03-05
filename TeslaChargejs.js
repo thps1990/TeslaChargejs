@@ -1,5 +1,5 @@
 //=============================Tesla Ueberschussladen - TeslaChargejs==========================================
-//V 1.6
+//V 1.8-beta
 //Stand:05.03.2022 
 
 //=============================Einstellungen/Konfiguration=====================================================
@@ -78,9 +78,10 @@ const ID_PV_AKKU_STAT = "OBJEKT.PV.AKKU_STATUS";
 //Welchen Wert hat das Objekt ID_PV_AKKU_STATUS wenn der Akku entladen wird?
 const PV_AKKU_STAT_ENTLADEN = "Entladen";
 
-//=============================Skript-Start==========================================================================
+//=============================Skript-Start=======================================
 //=============================Konstanten=========================================
 const ID_UEBERSCHUSSLADUNG_AKTIV =ID_SKRIPT_OBJEKT_VERZEICHNIS+".Ueberschussladung_aktiv";
+const ID_HAUSAKKU_ENTLADEN = ID_SKRIPT_OBJEKT_VERZEICHNIS +".Hausakku_entladen";
 const ID_ENERGY_ADDED_DAILY = ID_SKRIPT_OBJEKT_VERZEICHNIS+".energy_added_daily";
 const ID_ENERGY_ADDED_MONTHLY = ID_SKRIPT_OBJEKT_VERZEICHNIS+".energy_added_monthly";
 const ID_ENERGY_ADDED_YEARLY = ID_SKRIPT_OBJEKT_VERZEICHNIS+".energy_added_yearly";
@@ -122,6 +123,11 @@ createState(ID_CAR_STATE, {read: true, write: true});
 
 //Ein/Ausschalten der Ueberschussladung 
 createState(ID_UEBERSCHUSSLADUNG_AKTIV,true, {read: true, write: true});
+
+
+//Ein/Ausschalten der Hausakku-Entladen Funktion.  
+createState(ID_HAUSAKKU_ENTLADEN,false, {read: true, write: true});
+
 
 
 
@@ -173,8 +179,8 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
  
         }else if (charging_state == "Charging")
         {//Auto ist angeschlossen und lädt
-            log("IsCharging",true);
-            log("Einspeisung="+Einspeiseleistung + " Netzbezug="+Netzbezug,true);
+           log("IsCharging",true);
+           log("Einspeisung="+Einspeiseleistung + " Netzbezug="+Netzbezug,true);
             if(is_stopsoc_reached())
             {// Wenn PV-Akku ist unter Mindestschwelle
                 setState(ID_TSL_CMD_CHARGE_STOP,true);
@@ -195,8 +201,8 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
                     },ENTPRELL_ZEIT * 60000);   
                 }
             }
-            else
-            {
+            else if(!(getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1))
+            {// Die Funktion Hausakku_entladen ist nicht aktiv
                 if(getState(ID_TSL_GET_AMPS).val > 5)
                 { //Stromstärke kann noch verringert werden
                     if(Netzbezug > ampborder  || (NETZBEZUG_VERMEIDEN && Netzbezug > 0))
@@ -228,6 +234,15 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
                         },ENTPRELL_ZEIT * 60000);
                     }
                 }
+            }
+            else if ((getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1))
+            {// Hausakku entladen ist aktiv
+                if(getState(ID_PV_AKKU_SOC).val < PV_AKKU_STOP_SOC + 3)
+                {// 3 % vor Stop SoC wird Hausakku entladen wieder deaktiviert, damit die Ladung nicht gänzlich stoppt
+                    setState(ID_HAUSAKKU_ENTLADEN,false);
+                    log("Der Mindest SoC des Hausakku ist gleich erreicht. Hausakku-Entladen wird deaktiviert");
+                }
+
             }
         }
     }
@@ -301,6 +316,20 @@ on({id: [ID_TSL_STATE,ID_TSL_CHARGING_STATE], change: 'ne'}, function(obj){
     }else
     {
         setState(ID_CAR_STATE,"Unbekannt");    
+    }
+});
+
+
+// Hausakku Entladen wird eingschalten
+on({id: ID_HAUSAKKU_ENTLADEN, change: 'ne'}, function(obj){
+    if(getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1)
+    {//wurde eingeschalten; Maximale Stromstärke setzen und evtl Ladung starten
+        if(getState(ID_TSL_CHARGING_STATE).val == "Stopped")
+        {
+            setState(ID_TSL_CMD_CHARGE_START,true);
+
+        }
+        setStateDelayed(ID_TSL_CMD_SET_AMPS,MAX_STROMSTAERKE,2000);   
     }
 });
 
