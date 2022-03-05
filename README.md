@@ -3,6 +3,13 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
+### V1.7-beta
+- Bugfix- Mindest Soc PV-Anlage
+- Maximale Stromstärke als Parameter hinzugefügt
+- Feature: Hausakku Entladen hinzugefügt:
+    -  Ein neues Objekt "Hausakku_entladen" wird angelegt (zum steuern) 
+    -  Es wird mit maximaler Stromstärke geladen, bis der Hausakku den Mindest SoC fast erreicht hat
+    -  Anschließend schaltet sich das Feature ab und der Hausakku-Stand wird gehalten
 ### V1.6.1 
 - Doku überarbeitet
 
@@ -43,6 +50,10 @@ Dabei kann je nach aktueller Leistung der PV Anlage und Hausverbrauch die Ladung
 - Per Geofencing wird sichergestellt, dass das Skript nur an der Heimischen Wallbox/UMC funktioniert
 - Es ist keine intelligente Wallbox notwendig
 - Unterstützung PV mit Akku (Mindest-SoC für Start und Stop der Ladung)
+- Funktion Hausakku entladen:
+    -  Ein neues Objekt "Hausakku_entladen" wird angelegt (zum steuern) 
+    -  Es wird mit maximaler Stromstärke geladen, bis der Hausakku den Mindest SoC fast erreicht hat
+    -  Anschließend schaltet sich das Feature ab und der Hausakku-Stand wird gehalten
 - Benachrichtigung per Telegramm
 - Berechnung wieviel Energy mit PV-Überschuss geladen wurde
 - automatische Phasenerkennnung
