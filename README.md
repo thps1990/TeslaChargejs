@@ -79,6 +79,7 @@ Hersteller | Modell | Methode/Adapter
 -------- | -------- | --------
 SolarEdge   | SE5000 HD   | Modbus TCP / Modbus Adapter
 Kostal   | Smart Energy Meter (KSEM)   | Modbus TCP / Modbus Adapter
+SMA | SMA Homemanger 2.0|
 
 
 ### Einrichtung
