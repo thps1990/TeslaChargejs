@@ -3,7 +3,7 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
-### V1.7-beta
+### V1.7
 - Bugfix- Mindest Soc PV-Anlage
 - Maximale Stromstärke als Parameter hinzugefügt
 - Feature: Hausakku Entladen hinzugefügt:
