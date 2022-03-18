@@ -136,7 +136,6 @@ createState(ID_HAUSAKKU_ENTLADEN,false, {read: true, write: true});
 //Implementierung/Regelkreis
 on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung oder Netzbezug ändert....
     var charging_state= getState(ID_TSL_CHARGING_STATE).val;
-
     refresh_data();
     log("Zuhause=" +at_home() + " timeout_runinng=" + timeout_running + " Überschussladungaktiv = " +getState(ID_UEBERSCHUSSLADUNG_AKTIV).val +" chargingstate=" +charging_state,true); 
 
@@ -433,7 +432,10 @@ function calc_added_energy()
     log("New Daily="+(parseFloat(getState(ID_ENERGY_ADDED_DAILY).val) + energyadd).toFixed(2),true);
     log("New Monthly="+(parseFloat(getState(ID_ENERGY_ADDED_MONTHLY).val) + energyadd).toFixed(2),true);
     log("New Yearly="+(parseFloat(getState(ID_ENERGY_ADDED_YEARLY).val) + energyadd).toFixed(2),true);
-    log("Ladung beendet, es wurden " + energyadd + " kWh geladen",false,true);
+    if(energyadd > 0)
+    {
+        log("Ladung beendet, es wurden " + energyadd + " kWh mit Überschuss geladen",false,true);
+    }
     
     setState(ID_ENERGY_ADDED_DAILY,(parseFloat(getState(ID_ENERGY_ADDED_DAILY).val) + energyadd).toFixed(2));
     setStateDelayed(ID_ENERGY_ADDED_MONTHLY,(parseFloat(getState(ID_ENERGY_ADDED_MONTHLY).val) + energyadd).toFixed(2) ,500);
