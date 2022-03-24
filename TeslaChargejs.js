@@ -1,6 +1,6 @@
 //=============================Tesla Ueberschussladen - TeslaChargejs==========================================
-//V 1.8
-//Stand:18.03.22
+//V 1.8.1-Beta
+//Stand:24.03.22
 
 //=============================Einstellungen/Konfiguration=====================================================
 //Wo soll das Skript die neuen Objekte anlegen (Mit PV-Überschuss geladene Energy.... )
@@ -252,10 +252,12 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
 on({id: ID_UEBERSCHUSSLADUNG_AKTIV, change: 'ne'}, function(obj){
     if(getState(ID_UEBERSCHUSSLADUNG_AKTIV).val == false || getState(ID_UEBERSCHUSSLADUNG_AKTIV).val == 0 )
     {
-        setState( ID_TSL_CMD_SET_AMPS,16); 
+        setState( ID_TSL_CMD_SET_AMPS,MAX_STROMSTAERKE); 
     }
 });
 
+
+//Ladung beendet
 on({id: ID_TSL_CHARGING_STATE, change: 'ne'}, function(obj){
     if((getState(ID_TSL_CHARGING_STATE).val=="Disconnected") &&  at_home())
     {// Wenn Laden gestoppt wurde, oder Kabel Disconnected --> Ladung addieren
@@ -266,6 +268,14 @@ on({id: ID_TSL_CHARGING_STATE, change: 'ne'}, function(obj){
         }
             log("CALC",true);
             calc_added_energy();
+    }
+});
+
+//Ladung startet
+on({id: ID_TSL_CHARGING_STATE, oldVal: 'Disconnected'}, function(obj){ // Kabel wurde gerade erst verbunden
+    if(getState(ID_TSL_CHARGING_STATE).val != "Disconnected" && !timeout_running && !(getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==false || getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==0) &&  at_home())
+    {// Kabel wurde gerade angeschlossen und Überschussladung wird getriggert
+        setStateDelayed(ID_TSL_CMD_SET_AMPS,START_STROMSTAERKE,30000); //Start Stromstärke einstellen
     }
 });
 
