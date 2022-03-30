@@ -3,7 +3,7 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
-### V1.8.1-beta
+### V1.8.1
 - Bugfix-Maximalstromstärke wird gesetzt wenn Überschussladen deaktiviert
 - Setze Start-Stromstärke schon wenn das Kabel angesteckt wird - Je nach Update Intervall des Tesla-Adapters kann das eine Weile dauern
 
