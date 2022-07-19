@@ -1,4 +1,4 @@
-
+//abcdef
 on({id:"javascript.0.VIS.radio_wz",val:true}, function(obj){
    setState(ID_ALEXA_WZ_SPEAK, "Es spielt " + getState("javascript.0.VIS.default_radio").val);
    setState(ID_ALEXA_WZ_TUNEIN ,getState("javascript.0.VIS.default_radio").val) ;
