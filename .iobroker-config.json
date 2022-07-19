@@ -1,0 +1,7 @@
+{
+  "ioBrokerUrl": "http://smarthome",
+  "socketIoPort": 8081,
+  "scriptRoot": "/",
+  "adminVersion": "admin5",
+  "allowSelfSignedCertificate": false
+}

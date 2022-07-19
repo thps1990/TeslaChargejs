@@ -1,0 +1,381 @@
+//################# ENIGMA 2 BUTTON SCRIPT V3.3 #########################################
+ console.log('Start ENIGMA 2 BUTTON SCRIPT V3.3 ');
+//
+// -> https://github.com/Matten-Matten/ioBroker.enigma2/blob/master/admin/COMMAND
+//
+//
+//
+//####### WERTE IN DEN KLAMMERN ANPASSEN #########
+//                                              ##
+// Hier die Adapter Instanz festlegen           ##
+var ADAPTER_INSTANZ = 'enigma2.0';//            ##
+//                                              ##
+//################################################
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+//### AB HIER NIX VERÄNDERN #############################################################
+//
+var WEBINTERFACE, EXIT, STATE, MENU, RADIO, ADAPTER, IP, TV, PORT, VOL, USER, PW;
+//getState("enigma2.0.command.Button-Config.IP").val
+
+IP = getState(ADAPTER_INSTANZ + ".command.Button-Config.IP").val;
+PORT = getState(ADAPTER_INSTANZ + ".command.Button-Config.Port").val;
+USER = getState(ADAPTER_INSTANZ + ".command.Button-Config.USER").val;
+PW = getState(ADAPTER_INSTANZ + ".command.Button-Config.PW").val;
+WEBINTERFACE = getState(ADAPTER_INSTANZ + ".command.Button-Config.Webif").val;
+
+// WEBIF_VERSION
+if (WEBINTERFACE === '0') {
+  // DREAMWEBIF 
+  EXIT = '1';
+  MENU = '141';
+  RADIO = '377';
+  TV = '385';
+  //STOP= '166';
+  console.log('WEBIF_VERSION = Dream webif');
+  console.log('ADAPTER INSTANZ = ' + ADAPTER_INSTANZ);
+} else if (WEBINTERFACE == '1') {
+  // OPENWEBIF
+  EXIT = '174';
+  MENU = '139';
+  RADIO = '385';
+  TV = '377';
+  //STOP= '128';
+  console.log('WEBIF_VERSION = openwebif');
+  console.log('ADAPTER INSTANZ = ' + ADAPTER_INSTANZ);
+} else {
+  console.error('WEBIF_VERSION in Enigma2 Adapter-Einstellungen AUSWÄHLEN und das Buttonscript erneut starten!');
+}
+// Schaltzustand der e2 Box
+on({id: ADAPTER_INSTANZ + ".command.STANDBY_TOGGLE"/*command.STANDBY_TOGGLE*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  STATE = (obj.state ? obj.state.val : "");
+});
+
+// Adapterzustand
+on({id: "system.adapter." + ADAPTER_INSTANZ + ".alive"/*ADAPTER_INSTANZ + .alive*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if ((obj.state ? obj.state.val : "") === true) {
+    ADAPTER = true;
+  } else {
+    ADAPTER = false;
+  }
+});
+// Message
+var MTEXT, MTYPE, MTIMEOUT;
+
+on({id: ADAPTER_INSTANZ + ".Message.Button-Send"/*Message.Button-Send*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  MTEXT = getState(ADAPTER_INSTANZ + ".Message.Text").val;
+  MTYPE = getState(ADAPTER_INSTANZ + ".Message.Type").val;
+  MTIMEOUT = getState(ADAPTER_INSTANZ + ".Message.Timeout").val;
+  if (ADAPTER === true) {
+    try {
+    //  require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/message?text=',MTEXT,'&type=',MTYPE,'&timeout=',MTIMEOUT].join(''))).on("error", function (e) {console.error(e);});
+      require("request")('http://' + USER + ':' + PW + '@' + IP + ':' + PORT + '/web/message?text=' + MTEXT + '&type=' + MTYPE + '&timeout=' + MTIMEOUT).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+    //console.log('http://' + USER + ':****@' + IP + ':' + PORT + '/web/message?text=' + MTEXT + '&type=' + MTYPE + '&timeout=' + MTIMEOUT);
+    //console.debug('http://' + USER + ':' + PW + '@' + IP + ':' + PORT + '/web/message?text=' + MTEXT + '&type=' + MTYPE + '&timeout=' + MTIMEOUT);
+    if (MTYPE === 0) 
+    {
+        // if (MTIMEOUT > 0) 
+          //  {
+              setStateDelayed(ADAPTER_INSTANZ + ".Message.Question_Activ", true, 1500, false);
+           // }    
+        setStateDelayed(ADAPTER_INSTANZ + ".Message.Question_Activ", false, parseFloat(MTIMEOUT) * 1000, false);
+    }
+        setStateDelayed(ADAPTER_INSTANZ + ".Message.Text", '', 1500, false);
+  }
+});
+//########## ALEXA ######################################
+
+// Alexa MUTE
+on({id: ADAPTER_INSTANZ + ".Alexa.MUTED"/*Alexa.MUTED*/, val: true}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (getState(ADAPTER_INSTANZ + ".enigma2.MUTED").val === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',113].join(''))).on("error", function (e) {console.error(e);});
+      //console.log('Ton EIN');
+    } catch (e) { console.error(e); }
+  }
+});
+on({id: ADAPTER_INSTANZ + ".Alexa.MUTED"/*Alexa.MUTED*/, val: false}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (getState(ADAPTER_INSTANZ + ".enigma2.MUTED").val === false) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',113].join(''))).on("error", function (e) {console.error(e);});
+      //console.log('Ton AUS');
+    } catch (e) { console.error(e); }
+  }
+});
+
+// Alexa Standby 
+on({id: ADAPTER_INSTANZ + ".Alexa.STANDBY"/*Alexa.STANDBY*/, val: true}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (getState(ADAPTER_INSTANZ + ".enigma2.STANDBY").val === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',116].join(''))).on("error", function (e) {console.error(e);});
+      console.log('TV EIN');
+    } catch (e) { console.error(e); }
+  }
+});
+on({id: ADAPTER_INSTANZ + ".Alexa.STANDBY"/*Alexa.STANDBY*/, val: false}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (getState(ADAPTER_INSTANZ + ".enigma2.STANDBY").val === false) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',116].join(''))).on("error", function (e) {console.error(e);});
+      console.log('TV AUS');
+    } catch (e) { console.error(e); }
+  }
+});
+
+// Box Standby
+on({id: ADAPTER_INSTANZ + ".command.STANDBY_TOGGLE"/*command.STANDBY_TOGGLE*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',116].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// VOLUME
+on({id: ADAPTER_INSTANZ + ".command.SET_VOLUME"/*command.SET_VOLUME*/, change: "ne"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    VOL = getState(ADAPTER_INSTANZ + ".command.SET_VOLUME").val;
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/vol?set=set',Math.round(VOL)].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// MUTE
+on({id: ADAPTER_INSTANZ + ".command.MUTE_TOGGLE"/*command.MUTE_TOGGLE*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',113].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// CHANNEL_UP
+on({id: ADAPTER_INSTANZ + ".command.CHANNEL_UP"/*command.CHANNEL_UP*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',402].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// CHANNEL_DOWN
+on({id: ADAPTER_INSTANZ + ".command.CHANNEL_DOWN"/*command.CHANNEL_DOWN*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',403].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// OK
+on({id: ADAPTER_INSTANZ + ".command.OK"/*command.OK*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',352].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// DOWN
+on({id: ADAPTER_INSTANZ + ".command.DOWN"/*command.DOWN*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',108].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// EPG
+on({id: ADAPTER_INSTANZ + ".command.EPG"/*command.EPG*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',358].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// EXIT
+on({id: ADAPTER_INSTANZ + ".command.EXIT"/*command.EXIT*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',EXIT].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  } else {
+    console.warn('DER RECEIVER IST AUS!');
+  }
+});
+// LEFT
+on({id: ADAPTER_INSTANZ + ".command.LEFT"/*command.LEFT*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',105].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// MENU
+on({id: ADAPTER_INSTANZ + ".command.MENU"/*command.MENU*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',MENU].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  } else {
+    console.warn('DER RECEIVER IST AUS!');
+  }
+});
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+if (WEBINTERFACE === '0') {    
+// PLAY-PAUSE
+on({id: ADAPTER_INSTANZ + ".command.PLAY-PAUSE"/*command.PLAY-PAUSE*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',207,'&rcu=advanced'].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// STOP
+on({id: ADAPTER_INSTANZ + ".command.STOP"/*command.STOP*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',128,'&rcu=advanced'].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+} else if (WEBINTERFACE == '1') {    
+// PAUSE
+on({id: ADAPTER_INSTANZ + ".command.PAUSE"/*command.PAUSE*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',119].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// PLAY
+on({id: ADAPTER_INSTANZ + ".command.PLAY"/*command.PLAY*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',207].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// STOP
+on({id: ADAPTER_INSTANZ + ".command.STOP"/*command.STOP*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',128].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+}
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// RADIO
+on({id: ADAPTER_INSTANZ + ".command.RADIO"/*command.RADIO*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',RADIO].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  } else {
+    console.warn('DER RECEIVER IST AUS!');
+  }
+});
+// REC
+on({id: ADAPTER_INSTANZ + ".command.REC"/*command.REC*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',167].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// RIGHT
+on({id: ADAPTER_INSTANZ + ".command.RIGHT"/*command.RIGHT*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',106].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});
+// TV
+on({id: ADAPTER_INSTANZ + ".command.TV"/*command.TV*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER === true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',TV].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  } else {
+    console.warn('DER RECEIVER IST AUS!');
+  }
+});
+// UP
+on({id: ADAPTER_INSTANZ + ".command.UP"/*command.UP*/, change: "any"}, function (obj) {
+  var value = obj.state.val;
+  var oldValue = obj.oldState.val;
+  if (ADAPTER == true && ADAPTER == true) {
+    try {
+      require("request")((['http://',USER,':',PW,'@',IP,':',PORT,'/web/remotecontrol?command=',103].join(''))).on("error", function (e) {console.error(e);});
+    } catch (e) { console.error(e); }
+  }
+});

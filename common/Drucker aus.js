@@ -1,0 +1,1 @@
+setStateDelayed("sonoff.0.DVES_376B93.POWER", false, 2700000);
