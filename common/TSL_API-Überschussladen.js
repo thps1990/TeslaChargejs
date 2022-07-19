@@ -268,6 +268,8 @@ on({id: ID_TSL_CHARGING_STATE, change: 'ne'}, function(obj){
         }
             log("CALC",true);
             calc_added_energy();
+        // Hausakku entladen, deaktivieren
+        setState(ID_HAUSAKKU_ENTLADEN,false);
     }
 });
 
