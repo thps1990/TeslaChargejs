@@ -156,24 +156,24 @@ schedule('30,59 * * * *', function ()
     var Differenz_PVGARAGE = parseFloat(((getState(ID_EN_PV_ANLAGE).val - getState("0_userdata.0.PV-Anlage.Energie_Garage_alt").val)/1000).toFixed(2)); 
     console.log("Differenz PV-Garage= " +Differenz_PVGARAGE );
     setState("0_userdata.0.PV-Anlage.Energie_Garage_Daily",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Daily").val + Differenz_PVGARAGE).toFixed(2)));   
-    setState("0_userdata.0.PV-Anlage.Energie_Garage_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Monthly").val + Differenz_PVGARAGE).toFixed(2)));  
-    setState("0_userdata.0.PV-Anlage.Energie_Garage_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Yearly").val + Differenz_PVGARAGE).toFixed(2)));    
+    setState("0_userdata.0.PV-Anlage.Energie_Garage_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Monthly").val + Differenz_PVGARAGE).toFixed(0)));  
+    setState("0_userdata.0.PV-Anlage.Energie_Garage_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Yearly").val + Differenz_PVGARAGE).toFixed(0)));    
     setStateDelayed("0_userdata.0.PV-Anlage.Energie_Garage_alt",  getState(ID_EN_PV_ANLAGE).val,1000 ); 
 
     //Haus
     var Differenz_PVHAUS = parseFloat((getState(ID_PVMB_ENERGIE_TOTAL).val - getState("0_userdata.0.PV-Anlage.Energie_Haus_alt").val).toFixed(2));
 
     setState("0_userdata.0.PV-Anlage.Energie_Haus_Daily",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Haus_Daily").val + Differenz_PVHAUS).toFixed(2)));   
-    setState("0_userdata.0.PV-Anlage.Energie_Haus_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Haus_Monthly").val + Differenz_PVHAUS).toFixed(2)));  
-    setState("0_userdata.0.PV-Anlage.Energie_Haus_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Haus_Yearly").val + Differenz_PVHAUS).toFixed(2)));    
+    setState("0_userdata.0.PV-Anlage.Energie_Haus_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Haus_Monthly").val + Differenz_PVHAUS).toFixed(0)));  
+    setState("0_userdata.0.PV-Anlage.Energie_Haus_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Haus_Yearly").val + Differenz_PVHAUS).toFixed(0)));    
     setStateDelayed("0_userdata.0.PV-Anlage.Energie_Haus_alt",  getState(ID_PVMB_ENERGIE_TOTAL).val,1000 ); 
 
     //Netzbezug
     var Differenz_NETZBEZUG = parseFloat((getState(ID_PVMB_NETZBEZUG_TOTAL).val - getState("0_userdata.0.PV-Anlage.Energie_Netzbezug_alt").val).toFixed(2));
 
     setState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Daily",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Daily").val + Differenz_NETZBEZUG).toFixed(2)));   
-    setState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Monthly").val + Differenz_NETZBEZUG).toFixed(2)));  
-    setState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Yearly").val + Differenz_NETZBEZUG).toFixed(2)));    
+    setState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Monthly").val + Differenz_NETZBEZUG).toFixed(0)));  
+    setState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Yearly").val + Differenz_NETZBEZUG).toFixed(0)));    
     setStateDelayed("0_userdata.0.PV-Anlage.Energie_Netzbezug_alt",  getState(ID_PVMB_NETZBEZUG_TOTAL).val,1000 ); 
 
     //Einspeisung
@@ -181,8 +181,8 @@ schedule('30,59 * * * *', function ()
 
 
     setState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Daily",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Daily").val + Differenz_EINSPEISUNG).toFixed(2)));   
-    setState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Monthly").val + Differenz_EINSPEISUNG).toFixed(2)));  
-    setState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Yearly").val + Differenz_EINSPEISUNG).toFixed(2)));    
+    setState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Monthly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Monthly").val + Differenz_EINSPEISUNG).toFixed(0)));  
+    setState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Yearly",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Yearly").val + Differenz_EINSPEISUNG).toFixed(0)));    
     setStateDelayed("0_userdata.0.PV-Anlage.Energie_Einspeisung_alt",  getState(ID_PVMB_EINSPEISUNG_TOTAL).val,1000 ); 
 
     //Reine Berechnungen verzögern
@@ -193,8 +193,8 @@ schedule('30,59 * * * *', function ()
         var VERBRAUCH_Yearly = parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Yearly").val + getState("0_userdata.0.PV-Anlage.Energie_Haus_Yearly").val + getState("0_userdata.0.PV-Anlage.Energie_Netzbezug_Yearly").val - getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Yearly").val).toFixed(2));
 
         setState("0_userdata.0.PV-Anlage.Energie_Verbrauch_Daily",VERBRAUCH_Daily);   
-        setState("0_userdata.0.PV-Anlage.Energie_Verbrauch_Monthly",VERBRAUCH_Monthly);  
-        setState("0_userdata.0.PV-Anlage.Energie_Verbrauch_Yearly",VERBRAUCH_Yearly);  
+        setState("0_userdata.0.PV-Anlage.Energie_Verbrauch_Monthly",VERBRAUCH_Monthly.toFixed(0));  
+        setState("0_userdata.0.PV-Anlage.Energie_Verbrauch_Yearly",VERBRAUCH_Yearly.toFixed(0));  
 
         //Eigenverbrauch
         var EIGENVERBRAUCH_Daily = parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Daily").val + getState("0_userdata.0.PV-Anlage.Energie_Haus_Daily").val  - getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Daily").val).toFixed(2));
@@ -202,8 +202,8 @@ schedule('30,59 * * * *', function ()
         var EIGENVERBRAUCH_Yearly = parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Garage_Yearly").val + getState("0_userdata.0.PV-Anlage.Energie_Haus_Yearly").val - getState("0_userdata.0.PV-Anlage.Energie_Einspeisung_Yearly").val).toFixed(2));
 
         setState("0_userdata.0.PV-Anlage.Energie_Eigenverbrauch_Daily",EIGENVERBRAUCH_Daily);   
-        setState("0_userdata.0.PV-Anlage.Energie_Eigenverbrauch_Monthly",EIGENVERBRAUCH_Monthly);  
-        setState("0_userdata.0.PV-Anlage.Energie_Eigenverbrauch_Yearly",EIGENVERBRAUCH_Yearly);  
+        setState("0_userdata.0.PV-Anlage.Energie_Eigenverbrauch_Monthly",EIGENVERBRAUCH_Monthly.toFixed(0));  
+        setState("0_userdata.0.PV-Anlage.Energie_Eigenverbrauch_Yearly",EIGENVERBRAUCH_Yearly.toFixed(0));  
 
         //Gesamtproduktion
         setState("0_userdata.0.PV-Anlage.Energie_Gesamt_Daily",parseFloat((getState("0_userdata.0.PV-Anlage.Energie_Haus_Daily").val + getState("0_userdata.0.PV-Anlage.Energie_Garage_Daily").val)));   
