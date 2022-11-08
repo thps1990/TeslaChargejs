@@ -202,7 +202,7 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
             }
             else if(!(getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1))
             {// Die Funktion Hausakku_entladen ist nicht aktiv
-                if(getState(ID_TSL_GET_AMPS).val > 5)
+                if(getState(ID_TSL_GET_AMPS).val > START_STROMSTAERKE)
                 { //Stromstärke kann noch verringert werden
                     if(Netzbezug > ampborder  || (NETZBEZUG_VERMEIDEN && Netzbezug > 0))
                     { //Mehr als 250/700 Watt werden aus dem Netz bezogen oder Netzbezug vermeiden ist aktiviert und Netzbezug > 0
