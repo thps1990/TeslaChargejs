@@ -1,6 +1,6 @@
 //=============================Tesla Ueberschussladen - TeslaChargejs==========================================
-//V 1.8.1-Beta
-//Stand:24.03.22
+//V 1.9.0.1
+//Stand:18.02.2023
 
 //=============================Einstellungen/Konfiguration=====================================================
 //Wo soll das Skript die neuen Objekte anlegen (Mit PV-Überschuss geladene Energy.... )
