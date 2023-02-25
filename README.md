@@ -9,6 +9,7 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
     -   0_userdata.0.TeslaChargejs.Netzbezug_dynamisch
     -   Falls der Wert des einzelnen Objekts positiv ist --> Netzbezug = Wert; Einspeisung= 0
     -   Falls der Wert negativ ist -->  Netzbezug = 0; Einspeisung= Wert
+-   Code Redesign
 ### V1.9
 - Das Skript regelt nur zwischen Sonnenauf- und Untergang
 - Bugfix: Start Stromstärke wird richtig gesetzt
