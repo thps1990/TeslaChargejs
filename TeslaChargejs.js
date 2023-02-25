@@ -1,6 +1,6 @@
 //=============================Tesla Ueberschussladen - TeslaChargejs==========================================
-//V 1.9.0.1
-//Stand:18.02.2023
+//V 1.9.1-beta
+//Stand:25.02.2023
 
 //=============================Einstellungen/Konfiguration=====================================================
 //Wo soll das Skript die neuen Objekte anlegen (Mit PV-Überschuss geladene Energy.... )
@@ -27,10 +27,13 @@ const MAX_STROMSTAERKE              = 16; //A
 const NETZBEZUG_VERMEIDEN           = false; //true oder false 
 
  //IOBroker Objekt ID der Einspeiseleistung PV 
-const ID_EINSPEISE_LEISTUNG         = "OBJEKT.PV.EINSPEISUNG_LEISTUNG"; //Watt  
+let ID_EINSPEISE_LEISTUNG         = "OBJEKT.PV.EINSPEISUNG_LEISTUNG"; //Watt  
 
  //IObroker Objekt ID der Netzbezugsleistung PV
-const ID_NETZBEZUG_LEISTUNG         = "OBJEKT.PV.NETZBEZUG_LEISTUNG" ; //Watt
+// Leer lassen falls es nur ein Objekt für Netzbezug und Einspeiseleistung gibt und in ID_Einspeiseleistung das Objekt eintragen
+// Das Skript erzeugt automatisch 2 Status für Einspeiseleistung und Netzbezug
+// Falls der Wert positiv ist, wird der Wert als Netzbezug gespeichert, falls negativ als Einspeisung
+let ID_NETZBEZUG_LEISTUNG         = "" ; //Watt
 
 //IOBroker Objekt ID zum Tesla, generiert vom Tesla-Adatper (Root)
 const ID_TSL                        = "tesla-motors.0.123456789"; 
@@ -87,6 +90,8 @@ const ID_ENERGY_ADDED_MONTHLY = ID_SKRIPT_OBJEKT_VERZEICHNIS+".energy_added_mont
 const ID_ENERGY_ADDED_YEARLY = ID_SKRIPT_OBJEKT_VERZEICHNIS+".energy_added_yearly";
 const ID_CHARGING_PHASES = ID_SKRIPT_OBJEKT_VERZEICHNIS+".charging_phases";
 const ID_CAR_STATE = ID_SKRIPT_OBJEKT_VERZEICHNIS+".car_state";
+const ID_NETZBEZUG_DYNAMISCH = ID_SKRIPT_OBJEKT_VERZEICHNIS+".Netzbezug_dynamisch";
+const ID_EINSPEISUNG_DYNAMISCH = ID_SKRIPT_OBJEKT_VERZEICHNIS+".Einspeisung_dynamisch";
 const ID_TSL_STATE = ID_TSL + ".state";
 const ID_TSL_LATITUDE = ID_TSL + ".drive_state.latitude";
 const ID_TSL_LONGITUDE = ID_TSL + ".drive_state.longitude";
@@ -99,20 +104,47 @@ const ID_TSL_CMD_CHARGE_STOP = ID_TSL + ".remote.charge_stop";
 const ID_TSL_CHARGING_PHASES = ID_TSL + ".charge_state.charger_phases"; 
 const ID_TSL_ADDED_ENERGY   = ID_TSL + ".charge_state.charge_energy_added";
 
-//==============================Variablen=========================================
-var timeout_running = false;
-var Einspeiseleistung = 0;
-var Netzbezug = 0;
-var trigger = [ID_EINSPEISE_LEISTUNG,ID_NETZBEZUG_LEISTUNG];
-var chargedsofar=0;
+//==============================letiablen=========================================
+let timeout_running = false;
+let Einspeiseleistung = 0;
+let Netzbezug = 0;
 
-var added_energy_without_excess = 0;
+let chargedsofar=0;
+
+let added_energy_without_excess = 0;
 //==============================Initialisierung===================================
 //Erstellen von Status, sofern nicht vorhanden
 //Mit Überschuss geladene Energy -> täglich, monatlich, jährlich
 createState(ID_ENERGY_ADDED_DAILY,0, {unit: "kWh" , read: true, write: true});
 createState(ID_ENERGY_ADDED_MONTHLY,0, {unit: "kWh" , read: true, write: true});
 createState(ID_ENERGY_ADDED_YEARLY,0, {unit: "kWh" , read: true, write: true});
+
+//Prüfen ob es getrennte Objekte für Einspeisung und Netzbezug gibt
+if(ID_NETZBEZUG_LEISTUNG=="")
+{// nur ein objekt für Einspeisung und Netzbezug)
+  createState(ID_NETZBEZUG_DYNAMISCH,0, {unit: "W" , read: true, write: true});
+  createState(ID_EINSPEISUNG_DYNAMISCH,0, {unit: "W" , read: true, write: true});
+  let id_einspeiseleistung_org =  ID_EINSPEISE_LEISTUNG;
+ 
+  ID_EINSPEISE_LEISTUNG = ID_EINSPEISUNG_DYNAMISCH;
+  ID_NETZBEZUG_LEISTUNG = ID_NETZBEZUG_DYNAMISCH;
+
+  on({id: id_einspeiseleistung_org,change: 'ne'}, function(obj){
+    if(obj.state.val > 0 )
+    {//Netzbezug
+      setState(ID_NETZBEZUG_LEISTUNG,obj.state.val);
+      setState(ID_EINSPEISE_LEISTUNG,0);    
+    }else if(obj.state.val < 0)
+    {
+      setState(ID_NETZBEZUG_LEISTUNG,0);
+      setState(ID_EINSPEISE_LEISTUNG,obj.state.val * -1);   
+    }else
+    {
+        setState(ID_NETZBEZUG_LEISTUNG,0);
+        setState(ID_EINSPEISE_LEISTUNG,0);      
+    }
+  });
+}
 
 //Phasen-Korrektur
 createState(ID_CHARGING_PHASES,0, {read: true, write: true});
@@ -128,20 +160,20 @@ createState(ID_UEBERSCHUSSLADUNG_AKTIV,true, {read: true, write: true});
 //Ein/Ausschalten der Hausakku-Entladen Funktion.  
 createState(ID_HAUSAKKU_ENTLADEN,false, {read: true, write: true});
 
-
+let trigger = [ID_EINSPEISE_LEISTUNG,ID_NETZBEZUG_LEISTUNG];
 
 
 //====================Events=======================================
 
 //Implementierung/Regelkreis
 on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung oder Netzbezug ändert....
-    var charging_state= getState(ID_TSL_CHARGING_STATE).val;
+    let charging_state= getState(ID_TSL_CHARGING_STATE).val;
     refresh_data();
     log("Zuhause=" +at_home() + " timeout_runinng=" + timeout_running + " Überschussladungaktiv = " +getState(ID_UEBERSCHUSSLADUNG_AKTIV).val +" chargingstate=" +charging_state,true); 
 
     if( isAstroDay() && charging_state != "Disconnected" && !timeout_running && !(getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==false || getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==0) &&  at_home())
     {// Nur etwas tun, wenn das Auto mit Kabel verbunden, Ueberschussladen aktiv, Auto zuhause steht und gerade nicht auf eine Aktion gewartet wird
-        var ampborder = 700 ;//Watt <-- Geht immer von 3 phasigen laden aus
+        let ampborder = 700 ;//Watt <-- Geht immer von 3 phasigen laden aus
        
         if(getState(ID_TSL_CHARGING_PHASES).val == 1)
         {//Wenn nur eine Phase, dann reduzieren
@@ -410,14 +442,14 @@ function is_stopsoc_reached()
 
 function at_home() 
 {//Entfernung des Autos vom Heimstandort ermitteln
-    var lat1 = Deg2Rad(ZUHAUSE_LATITUDE);
-    var lat2 = Deg2Rad(getState(ID_TSL_LATITUDE).val);
-    var lon1 = Deg2Rad(ZUHAUSE_LONGITUDE);
-    var lon2 = Deg2Rad(getState(ID_TSL_LONGITUDE).val);
-    var R = 6371; // km
-    var x = (lon2-lon1) * Math.cos((lat1+lat2)/2);
-    var y = (lat2-lat1);
-    var d = Math.sqrt(x*x + y*y) * R;
+    let lat1 = Deg2Rad(ZUHAUSE_LATITUDE);
+    let lat2 = Deg2Rad(getState(ID_TSL_LATITUDE).val);
+    let lon1 = Deg2Rad(ZUHAUSE_LONGITUDE);
+    let lon2 = Deg2Rad(getState(ID_TSL_LONGITUDE).val);
+    let R = 6371; // km
+    let x = (lon2-lon1) * Math.cos((lat1+lat2)/2);
+    let y = (lat2-lat1);
+    let d = Math.sqrt(x*x + y*y) * R;
 
     if(d <= ZUHAUSE_MAX_ENTFERNUNG)
     {
@@ -430,7 +462,7 @@ function at_home()
 
 function calc_added_energy()
 {
-    var energyadd=0;
+    let energyadd=0;
     
     if(!(getState(ID_UEBERSCHUSSLADUNG_AKTIV).val == 1 || getState(ID_UEBERSCHUSSLADUNG_AKTIV).val ==true))
     {//Überschussladung gerade nicht aktiv
