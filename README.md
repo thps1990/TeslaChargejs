@@ -3,7 +3,7 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
-### V 1.9.1-beta
+### V 1.9.1
 - Falls nur ein Status für Einspeisung und Netzbezug vorhanden ist, erstellt das Skript 2 neue Objekte:
     -   0_userdata.0.TeslaChargejs.Einspeisung_dynamisch
     -   0_userdata.0.TeslaChargejs.Netzbezug_dynamisch
