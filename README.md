@@ -3,6 +3,11 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
+### V 1.9.2 - Beta
+- Das Laden des Fahrzeugs wird automatisch gestoppt falls:
+    - das Überschussladen aktiviert ist
+    - das Auto zuhause steht 
+    - es nach Sonnenuntergang und vor Sonnenaufgang ist
 ### V 1.9.1
 - Falls nur ein Status für Einspeisung und Netzbezug vorhanden ist, erstellt das Skript 2 neue Objekte:
     -   0_userdata.0.TeslaChargejs.Einspeisung_dynamisch
