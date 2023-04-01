@@ -1,6 +1,6 @@
 //=============================Tesla Ueberschussladen - TeslaChargejs==========================================
-//V 1.9.1
-//Stand:25.02.2023
+//V 1.9.2
+//Stand:01.04.2023
 
 //=============================Einstellungen/Konfiguration=====================================================
 //Wo soll das Skript die neuen Objekte anlegen (Mit PV-Überschuss geladene Energy.... )
@@ -373,6 +373,16 @@ on({id: ID_HAUSAKKU_ENTLADEN, change: 'ne'}, function(obj){
 
         }
         setStateDelayed(ID_TSL_CMD_SET_AMPS,MAX_STROMSTAERKE,2000);   
+    }
+});
+
+
+// Das Laden Stoppen, falls Nach Sonnenuntergang das Laden gestartet wurde und die Überschussladung aktiv ist
+on({id:ID_TSL_CHARGING_STATE, change: 'ne'}, function(obj){
+    if(getState(ID_TSL_CHARGING_STATE).val== "Charging" && !isAstroDay() && at_home() && !(getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==false || getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==0) )
+    {
+        setState(ID_TSL_CMD_CHARGE_STOP,true);
+        log("Das Laden wurde automatisch gestoppt - Es ist nach Sonnenuntergang und vor Sonnenaufgang",false,true);
     }
 });
 
