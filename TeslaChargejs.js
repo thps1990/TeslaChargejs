@@ -1,6 +1,6 @@
 //=============================Tesla Ueberschussladen - TeslaChargejs==========================================
-//V 1.9.2
-//Stand:01.04.2023
+//V 1.9.3
+//Stand:02.05.2023
 
 //=============================Einstellungen/Konfiguration=====================================================
 //Wo soll das Skript die neuen Objekte anlegen (Mit PV-Überschuss geladene Energy.... )
@@ -21,6 +21,7 @@ const START_STROMSTAERKE            = 5; // A
 
 //Mit welcher Stromstärke soll maximal geladen werden (Wird auch zum entladen des Hausakkus verwendet)
 const MAX_STROMSTAERKE              = 16; //A
+
 
 //Soll Netzbezug im Rahmen der Stromstärkenregulierung vermieden werden?
 //Wenn diese Option aktiviert ist wird die Stromstärke reduziert, sobald ein Strom aus dem Netz/AKku bezogen wird
@@ -90,9 +91,11 @@ const ID_ENERGY_ADDED_MONTHLY = ID_SKRIPT_OBJEKT_VERZEICHNIS+".energy_added_mont
 const ID_ENERGY_ADDED_YEARLY = ID_SKRIPT_OBJEKT_VERZEICHNIS+".energy_added_yearly";
 const ID_CHARGING_PHASES = ID_SKRIPT_OBJEKT_VERZEICHNIS+".charging_phases";
 const ID_CAR_STATE = ID_SKRIPT_OBJEKT_VERZEICHNIS+".car_state";
+const ID_TSL_MIN_SOC =ID_SKRIPT_OBJEKT_VERZEICHNIS +".tesla_min_soc" ; 
 const ID_NETZBEZUG_DYNAMISCH = ID_SKRIPT_OBJEKT_VERZEICHNIS+".Netzbezug_dynamisch";
 const ID_EINSPEISUNG_DYNAMISCH = ID_SKRIPT_OBJEKT_VERZEICHNIS+".Einspeisung_dynamisch";
 const ID_TSL_STATE = ID_TSL + ".state";
+const ID_TSL_SOC = ID_TSL + ".charge_state.battery_level";
 const ID_TSL_LATITUDE = ID_TSL + ".drive_state.latitude";
 const ID_TSL_LONGITUDE = ID_TSL + ".drive_state.longitude";
 const ID_TSL_CHARGING_STATE= ID_TSL + ".charge_state.charging_state";
@@ -114,6 +117,7 @@ let chargedsofar=0;
 let added_energy_without_excess = 0;
 //==============================Initialisierung===================================
 //Erstellen von Status, sofern nicht vorhanden
+
 //Mit Überschuss geladene Energy -> täglich, monatlich, jährlich
 createState(ID_ENERGY_ADDED_DAILY,0, {unit: "kWh" , read: true, write: true});
 createState(ID_ENERGY_ADDED_MONTHLY,0, {unit: "kWh" , read: true, write: true});
@@ -149,6 +153,9 @@ if(ID_NETZBEZUG_LEISTUNG=="")
 //Phasen-Korrektur
 createState(ID_CHARGING_PHASES,0, {read: true, write: true});
 
+//Tesla Mindest SOC
+createState(ID_TSL_MIN_SOC,5,{unit: "%" , read: true, write: true});
+
 //Fahrzeug Status
 createState(ID_CAR_STATE, {read: true, write: true});
 
@@ -170,110 +177,125 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
     let charging_state= getState(ID_TSL_CHARGING_STATE).val;
     refresh_data();
     log("Zuhause=" +at_home() + " timeout_runinng=" + timeout_running + " Überschussladungaktiv = " +getState(ID_UEBERSCHUSSLADUNG_AKTIV).val +" chargingstate=" +charging_state,true); 
-
+    
     if( isAstroDay() && charging_state != "Disconnected" && !timeout_running && !(getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==false || getState(ID_UEBERSCHUSSLADUNG_AKTIV).val==0) &&  at_home())
     {// Nur etwas tun, wenn das Auto mit Kabel verbunden, Ueberschussladen aktiv, Auto zuhause steht und gerade nicht auf eine Aktion gewartet wird
-        let ampborder = 700 ;//Watt <-- Geht immer von 3 phasigen laden aus
-       
-        if(getState(ID_TSL_CHARGING_PHASES).val == 1)
-        {//Wenn nur eine Phase, dann reduzieren
-            ampborder = 250;//Watt
-        }
-
-        if(charging_state == "Stopped")
-        { //Auto ist angeschlossen, lädt aber nicht
-             if(Einspeiseleistung > MINDEST_EINSPEISE_LEISTUNG && is_startsoc_reached())
-            {//Mindesteinspeiseleistung erreich ; Laden starten
-                timeout_running = true;
-                setTimeout(function(){
-                    timeout_running = false;
-                    refresh_data();
-                    if(Einspeiseleistung > MINDEST_EINSPEISE_LEISTUNG && is_startsoc_reached())
-                    { //prüfen ob Einspeiseleistung noch ausreichend
-                        //Laden tatsächlich starten
- 
-                        if(getState(ID_TSL_STATE).val =="asleep")
-                        { // Wenn das Auto schläft, dann vorher aufwecken und nach 30 Sekunden Ladung starten
-                            setState(ID_TSL_CMD_WAKEUP,true);
-                            setStateDelayed(ID_TSL_CMD_CHARGE_START,true,30000);
-                            setStateDelayed(ID_TSL_CMD_SET_AMPS,START_STROMSTAERKE,30000); 
-                            log("Laden gestartet (verzögert)");
-                        }else
-                        {
-                            setState(ID_TSL_CMD_CHARGE_START,true);
-                            setStateDelayed(ID_TSL_CMD_SET_AMPS,START_STROMSTAERKE,2000);
-                            log("Laden gestartet",false,true);
-                        }
-                    }
-                },ENTPRELL_ZEIT * 60000);
+        if(getState(ID_TSL_SOC).val < getState(ID_TSL_MIN_SOC).val)
+        {// SoC des Autos ist unter Minimum, Vollgas laden
+            if(charging_state != "Charging")
+            {// Auto lädt noch nicht
+                setState(ID_TSL_CMD_CHARGE_START,true);//Laden starten
+                setStateDelayed(ID_TSL_CMD_SET_AMPS,MAX_STROMSTAERKE,2000); // Maximale Stromstärke
+            } 
+            else if(getState(ID_TSL_GET_AMPS).val < MAX_STROMSTAERKE )
+            {// Noch nicht die maximale Stromstärke eingestellt
+                setStateDelayed(ID_TSL_CMD_SET_AMPS,MAX_STROMSTAERKE,2000); // Maximale Stromstärke
             }
- 
-        }else if (charging_state == "Charging")
-        {//Auto ist angeschlossen und lädt
-           log("IsCharging",true);
-           log("Einspeisung="+Einspeiseleistung + " Netzbezug="+Netzbezug,true);
-            if(is_stopsoc_reached())
-            {// Wenn PV-Akku ist unter Mindestschwelle
-                setState(ID_TSL_CMD_CHARGE_STOP,true);
-                log("Laden gestoppt, Akkustand PV zu niedrig",false,true);
-            }else if(Einspeiseleistung > ampborder)
-            { // Mehr als 250/700 Watt werden eingespeist
-                if(getState(ID_TSL_GET_AMPS).val < MAX_STROMSTAERKE)
-                {
+        }
+        else
+        {
+            let ampborder = 700 ;//Watt <-- Geht immer von 3 phasigen laden aus
+        
+            if(getState(ID_TSL_CHARGING_PHASES).val == 1)
+            {//Wenn nur eine Phase, dann reduzieren
+                ampborder = 250;//Watt
+            }
+
+            if(charging_state == "Stopped")
+            { //Auto ist angeschlossen, lädt aber nicht
+                if(Einspeiseleistung > MINDEST_EINSPEISE_LEISTUNG && is_startsoc_reached())
+                {//Mindesteinspeiseleistung erreich ; Laden starten
                     timeout_running = true;
                     setTimeout(function(){
                         timeout_running = false;
                         refresh_data();
-                        if(Einspeiseleistung > ampborder)
-                        {// Stromstärke erhöhen
-                            log("Stromstärke wird von " + getState(ID_TSL_GET_AMPS).val + " A auf " + (getState(ID_TSL_GET_AMPS).val + 1) +" A erhöht.");
-                            setState(ID_TSL_CMD_SET_AMPS, getState(ID_TSL_GET_AMPS).val + 1);
+                        if(Einspeiseleistung > MINDEST_EINSPEISE_LEISTUNG && is_startsoc_reached())
+                        { //prüfen ob Einspeiseleistung noch ausreichend
+                            //Laden tatsächlich starten
+    
+                            if(getState(ID_TSL_STATE).val =="asleep")
+                            { // Wenn das Auto schläft, dann vorher aufwecken und nach 30 Sekunden Ladung starten
+                                setState(ID_TSL_CMD_WAKEUP,true);
+                                setStateDelayed(ID_TSL_CMD_CHARGE_START,true,30000);
+                                setStateDelayed(ID_TSL_CMD_SET_AMPS,START_STROMSTAERKE,30000); 
+                                log("Laden gestartet (verzögert)");
+                            }else
+                            {
+                                setState(ID_TSL_CMD_CHARGE_START,true);
+                                setStateDelayed(ID_TSL_CMD_SET_AMPS,START_STROMSTAERKE,2000);
+                                log("Laden gestartet",false,true);
+                            }
                         }
-                    },ENTPRELL_ZEIT * 60000);   
+                    },ENTPRELL_ZEIT * 60000);
                 }
-            }
-            else if(!(getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1))
-            {// Die Funktion Hausakku_entladen ist nicht aktiv
-                if(getState(ID_TSL_GET_AMPS).val > START_STROMSTAERKE)
-                { //Stromstärke kann noch verringert werden
-                    if(Netzbezug > ampborder  || (NETZBEZUG_VERMEIDEN && Netzbezug > 0))
-                    { //Mehr als 250/700 Watt werden aus dem Netz bezogen oder Netzbezug vermeiden ist aktiviert und Netzbezug > 0
+    
+            }else if (charging_state == "Charging")
+            {//Auto ist angeschlossen und lädt
+            log("IsCharging",true);
+            log("Einspeisung="+Einspeiseleistung + " Netzbezug="+Netzbezug,true);
+                if(is_stopsoc_reached())
+                {// Wenn PV-Akku ist unter Mindestschwelle
+                    setState(ID_TSL_CMD_CHARGE_STOP,true);
+                    log("Laden gestoppt, Akkustand PV zu niedrig",false,true);
+                }else if(Einspeiseleistung > ampborder)
+                { // Mehr als 250/700 Watt werden eingespeist
+                    if(getState(ID_TSL_GET_AMPS).val < MAX_STROMSTAERKE)
+                    {
                         timeout_running = true;
                         setTimeout(function(){
                             timeout_running = false;
                             refresh_data();
-                            if(Netzbezug > ampborder  || (NETZBEZUG_VERMEIDEN && Netzbezug > 0))
-                            {// Stromstärke verringern
-                                log("Stromstärke wird von " + getState(ID_TSL_GET_AMPS).val + " A auf " + (getState(ID_TSL_GET_AMPS).val - 1) +" A verringert.");
-                                setState(ID_TSL_CMD_SET_AMPS, getState(ID_TSL_GET_AMPS).val - 1);
+                            if(Einspeiseleistung > ampborder)
+                            {// Stromstärke erhöhen
+                                log("Stromstärke wird von " + getState(ID_TSL_GET_AMPS).val + " A auf " + (getState(ID_TSL_GET_AMPS).val + 1) +" A erhöht.");
+                                setState(ID_TSL_CMD_SET_AMPS, getState(ID_TSL_GET_AMPS).val + 1);
                             }
                         },ENTPRELL_ZEIT * 60000);   
                     }
-                }else
-                { //Laden muss evtl gestoppt werden
-                    if(Netzbezug > MAXIMAL_NETZBEZUG)
-                    { // Zu VielNetzbezug --> Laden abbrechen
-                        timeout_running = true;
-                        setTimeout(function(){
-                            timeout_running = false;
-                            refresh_data();
-                            if(Netzbezug > MAXIMAL_NETZBEZUG && getState(ID_TSL_GET_AMPS).val < 6)
-                            {// Laden Stoppen 
-                                setState(ID_TSL_CMD_CHARGE_STOP,true);
-                                log("Laden gestoppt, zu wenig PV-Leistung vorhanden",false,true);
-                            }
-                        },ENTPRELL_ZEIT * 60000);
+                }
+                else if(!(getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1))
+                {// Die Funktion Hausakku_entladen ist nicht aktiv
+                    if(getState(ID_TSL_GET_AMPS).val > START_STROMSTAERKE)
+                    { //Stromstärke kann noch verringert werden
+                        if(Netzbezug > ampborder  || (NETZBEZUG_VERMEIDEN && Netzbezug > 0))
+                        { //Mehr als 250/700 Watt werden aus dem Netz bezogen oder Netzbezug vermeiden ist aktiviert und Netzbezug > 0
+                            timeout_running = true;
+                            setTimeout(function(){
+                                timeout_running = false;
+                                refresh_data();
+                                if(Netzbezug > ampborder  || (NETZBEZUG_VERMEIDEN && Netzbezug > 0))
+                                {// Stromstärke verringern
+                                    log("Stromstärke wird von " + getState(ID_TSL_GET_AMPS).val + " A auf " + (getState(ID_TSL_GET_AMPS).val - 1) +" A verringert.");
+                                    setState(ID_TSL_CMD_SET_AMPS, getState(ID_TSL_GET_AMPS).val - 1);
+                                }
+                            },ENTPRELL_ZEIT * 60000);   
+                        }
+                    }else
+                    { //Laden muss evtl gestoppt werden
+                        if(Netzbezug > MAXIMAL_NETZBEZUG)
+                        { // Zu VielNetzbezug --> Laden abbrechen
+                            timeout_running = true;
+                            setTimeout(function(){
+                                timeout_running = false;
+                                refresh_data();
+                                if(Netzbezug > MAXIMAL_NETZBEZUG && getState(ID_TSL_GET_AMPS).val < 6)
+                                {// Laden Stoppen 
+                                    setState(ID_TSL_CMD_CHARGE_STOP,true);
+                                    log("Laden gestoppt, zu wenig PV-Leistung vorhanden",false,true);
+                                }
+                            },ENTPRELL_ZEIT * 60000);
+                        }
                     }
                 }
-            }
-            else if ((getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1))
-            {// Hausakku entladen ist aktiv
-                if(getState(ID_PV_AKKU_SOC).val < PV_AKKU_STOP_SOC + 3)
-                {// 3 % vor Stop SoC wird Hausakku entladen wieder deaktiviert, damit die Ladung nicht gänzlich stoppt
-                    setState(ID_HAUSAKKU_ENTLADEN,false);
-                    log("Der Mindest SoC des Hausakku ist gleich erreicht. Hausakku-Entladen wird deaktiviert");
-                }
+                else if ((getState(ID_HAUSAKKU_ENTLADEN).val==true || getState(ID_HAUSAKKU_ENTLADEN).val==1))
+                {// Hausakku entladen ist aktiv
+                    if(getState(ID_PV_AKKU_SOC).val < PV_AKKU_STOP_SOC + 3)
+                    {// 3 % vor Stop SoC wird Hausakku entladen wieder deaktiviert, damit die Ladung nicht gänzlich stoppt
+                        setState(ID_HAUSAKKU_ENTLADEN,false);
+                        log("Der Mindest SoC des Hausakku ist gleich erreicht. Hausakku-Entladen wird deaktiviert");
+                    }
 
+                }
             }
         }
     }
