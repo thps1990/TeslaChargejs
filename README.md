@@ -3,6 +3,10 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
+### V 1.9.3-beta
+- Neues Objekt ".TeslaChargejs.tesla_min_soc" erstellt
+    - Ist der SoC des Autos unter dem Wert (Default 5%) wird das Laden mit der Maximalstromstärke gestartet bis der Mindest SoC erreicht ist
+    - Den Wert des Objekts auf 0 setzen um die Funktion komplett zu deaktivieren
 ### V 1.9.2
 - Das Laden des Fahrzeugs wird automatisch gestoppt falls:
     - das Überschussladen aktiviert ist
