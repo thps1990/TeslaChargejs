@@ -3,7 +3,7 @@ IOBroker basiertes PV-Überschuss Ladung mit Tesla Fahrzeugen unabhängig von de
 
 
 ## Release Notes
-### V 1.9.2 - Beta
+### V 1.9.2
 - Das Laden des Fahrzeugs wird automatisch gestoppt falls:
     - das Überschussladen aktiviert ist
     - das Auto zuhause steht 
