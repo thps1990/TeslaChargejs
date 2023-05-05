@@ -278,7 +278,7 @@ on({id: trigger,change: 'ne'}, function(obj){ //Wenn sich die Einspeiseleistung 
                             setTimeout(function(){
                                 timeout_running = false;
                                 refresh_data();
-                                if(Netzbezug > MAXIMAL_NETZBEZUG && getState(ID_TSL_GET_AMPS).val < 6)
+                                if(Netzbezug > MAXIMAL_NETZBEZUG && getState(ID_TSL_GET_AMPS).val < START_STROMSTAERKE)
                                 {// Laden Stoppen 
                                     setState(ID_TSL_CMD_CHARGE_STOP,true);
                                     log("Laden gestoppt, zu wenig PV-Leistung vorhanden",false,true);
